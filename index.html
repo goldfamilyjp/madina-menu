@@ -182,6 +182,11 @@
         border-radius:12px;padding:12px 14px;font-size:15px;font-weight:900;text-align:left;line-height:1.4;
       }
       .howto-toggle:active{transform:scale(.99)}
+      .howto-toggle.howto-q{
+        width:42px;height:42px;min-width:42px;padding:0;margin-top:12px;
+        border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+        font-size:21px;font-weight:900;line-height:1;text-align:center;
+      }
       .howto-toggle .ht-chev{
         flex:none;font-size:15px;color:var(--halal);line-height:1;
         transition:transform .22s ease;
@@ -803,9 +808,8 @@
     <!-- HOW TO ORDER TAB — directly under the Recommended list;
          the full instructions stay hidden until tapped -->
     <div class="branch-box">
-        <button type="button" class="howto-toggle" id="howto-toggle" aria-expanded="false" aria-controls="howto-panel" onclick="return toggleHowto()">
-          <span id="howto-toggle-label">❓ 注文方法はこちら / How to Order</span>
-          <span class="ht-chev" aria-hidden="true">▾</span>
+        <button type="button" class="howto-toggle howto-q" id="howto-toggle" aria-expanded="false" aria-controls="howto-panel" onclick="return toggleHowto()" aria-label="注文方法 / How to Order" title="注文方法 / How to Order">
+          <span id="howto-toggle-label">?</span>
         </button>
         <div class="howto" id="howto-panel" hidden>
           <strong>ピックアップ注文の流れ / How to Order for Pickup</strong><br>
@@ -1048,7 +1052,7 @@
         panel.hidden = !willOpen;
         btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
         var label = document.getElementById("howto-toggle-label");
-        if (label) label.textContent = willOpen ? "閉じる / Close" : "❓ 注文方法はこちら / How to Order";
+        if (label) label.textContent = willOpen ? "✕" : "?";
         return false;
       }
       function closeHowto(){
