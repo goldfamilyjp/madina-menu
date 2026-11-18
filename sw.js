@@ -1,8 +1,11 @@
-// Madina Menu service worker — minimal: enables "Add to Home Screen" install.
+// Madina Menu service worker — enables "Add to Home Screen" install.
+// All paths are RELATIVE to this file's folder so it works under the
+// GitHub Pages subpath /madina-menu/ (root-absolute paths broke the
+// home-screen icon after the move from Netlify).
 // Strategy: network-first for the page itself so the menu is never stale;
 // cache-first for icons/manifest. Orders go through WhatsApp/LINE (external), untouched.
-const CACHE = 'madina-menu-v1';
-const CORE = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
+const CACHE = 'madina-menu-v2';
+const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -24,16 +27,16 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // let WhatsApp/LINE/maps go straight out
 
-  if (req.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+  if (req.mode === 'navigate') {
     // Network-first for the menu page so prices/items are always current.
     event.respondWith(
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put('/index.html', copy));
+          caches.open(CACHE).then((cache) => cache.put('./index.html', copy));
           return res;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
