@@ -774,12 +774,13 @@
          店舗情報 / Branch details section at the very bottom. -->
     <div class="branch-box">
       <div class="branch-card">
-        <div class="branch-pick-title">🏪 受け取り店舗<span class="en">SELECT PICKUP BRANCH</span></div>
-        <p class="branch-pick-sub">お受け取りになる店舗を先にお選びください。<span class="bi-en">First, please choose the branch where you will pick up your order.</span></p>
+        <div class="branch-pick-title">🏪 受け取り店舗（必須）<span class="en">SELECT PICKUP BRANCH — REQUIRED</span></div>
+        <p class="branch-pick-sub">お受け取りになる店舗を必ず先にお選びください。<span class="bi-en">First, please choose the branch where you will pick up your order.</span></p>
         <div class="seg" role="tablist" aria-label="受け取り店舗を選択 / Select pickup branch">
-          <button type="button" id="seg-anjo" role="tab" aria-selected="true" onclick="setBranch('anjo')">安城店 Anjo</button>
+          <button type="button" id="seg-anjo" role="tab" aria-selected="false" onclick="setBranch('anjo')">安城店 Anjo</button>
           <button type="button" id="seg-toyota" role="tab" aria-selected="false" onclick="setBranch('toyota')">豊田店 Toyota</button>
         </div>
+        <p id="branch-required-note" hidden style="margin:10px 0 0;color:#b91c1c;font-weight:700;font-size:13.5px;line-height:1.6">⚠ まず受け取り店舗をお選びください。店舗を選ぶまで注文できません。<br>Please select a pickup branch first — you cannot order until you choose one.</p>
       </div>
     </div>
 
@@ -963,7 +964,7 @@
             <p class="hint">受け取りの際にカウンターでお伝えいただくお名前です。<br>The name you will give at the counter when you pick up.</p>
           </div>
           <div class="field">
-            <label for="pickup-time">受け取り希望時間<span class="bi-en">Pickup Time</span></label>
+            <label for="pickup-time">受け取り希望時間（必須）<span class="bi-en">Pickup Time — Required</span></label>
             <select id="pickup-time"></select>
             <div class="pickup-range-note" id="pickup-range-note" role="note"></div>
             <p class="hint" id="pickup-time-hint">店舗と曜日によって受け取り時間が変わります。30分ごとに選べます。<br>Pickup hours depend on the branch and the day of the week. Slots are every 30 minutes.</p>
@@ -1445,7 +1446,7 @@
 
       ];
 
-      var branch = "anjo";
+      var branch = null; /* no default branch: the customer MUST select one first (Ali, 2026-11-18) */
       var cart = {}; // key ("id" or "id@spiceLevel") -> qty
       /* Display order of the cart lines: the sequence in which each entry
          was FIRST added. Kept separately from the cart object so that
@@ -1556,7 +1557,17 @@
            (address / phone / Call & Map) live in the collapsible
            section at the bottom of the page, so nothing up here needs
            updating beyond the selector itself. */
+        if (!BRANCHES[b]){
+          branch = null;
+          byId("seg-anjo").setAttribute("aria-selected", "false");
+          byId("seg-toyota").setAttribute("aria-selected", "false");
+          byId("cart-branch-line").textContent = "受け取り店舗 / Pickup branch: 未選択 — 先にお選びください (Not selected yet — please choose a branch first)";
+          if (typeof buildPickupSlots === "function") buildPickupSlots();
+          return;
+        }
+        if (branch !== b) slotChosenByUser = false; /* a branch change means the pickup time must be chosen again */
         branch = b;
+        var rn0 = byId("branch-required-note"); if (rn0) rn0.hidden = true;
         byId("seg-anjo").setAttribute("aria-selected", b==="anjo" ? "true" : "false");
         byId("seg-toyota").setAttribute("aria-selected", b==="toyota" ? "true" : "false");
         var d = BRANCHES[b];
@@ -1734,7 +1745,18 @@
         }
       }
       /* from a dish card: adds/removes at the level chosen on that card */
+      /* Branch is mandatory FIRST (Ali, 2026-11-18): until the customer
+         picks a pickup branch, adding dishes is blocked and the page
+         points them back to the branch selector at the top. */
+      function requireBranch(){
+        var seg = byId("seg-anjo");
+        if (seg && seg.scrollIntoView) seg.scrollIntoView({ behavior: "smooth", block: "center" });
+        var rn = byId("branch-required-note");
+        if (rn) rn.hidden = false;
+        if (seg && seg.focus) { try { seg.focus({ preventScroll: true }); } catch (e) {} }
+      }
       function changeQty(id, delta){
+        if (delta > 0 && !branch){ requireBranch(); return; }
         addToKey(keyFor(id), delta);
         syncItemUI(id); syncCartBar();
         if (byId("cart-overlay").classList.contains("on")) renderCartLines();
@@ -1824,6 +1846,12 @@
       /* ---------- order ticket (invoice style) ---------- */
       function placeOrder(){
         if (cartCount() === 0) return;
+        if (!branch){ closeCart(); requireBranch(); return; }
+        if (!pickupFields().time){
+          alert("受け取り時間をお選びください。\nPlease select a pickup time.");
+          var tEl0 = byId("pickup-time"); if (tEl0 && tEl0.focus) tEl0.focus();
+          return;
+        }
         var d = BRANCHES[branch];
         var now = new Date();
         var num = d.prefix + "-" + String(Math.floor(1000 + Math.random() * 9000));
@@ -2005,27 +2033,34 @@
         return { start: 11 * 60 + 30, end: end };
       }
       var pickupSlotsInit = false; /* false until the slots are first built (or an order completes) */
+      var slotChosenByUser = false; /* true only after the customer personally picks a pickup time */
       function buildPickupSlots(){
         var sel = byId("pickup-time");
         if (!sel) return;
+        if (!branch){
+          sel.innerHTML = '<option value="">店舗を選ぶと時間が選べます / Select a branch first</option>';
+          sel.value = "";
+          var nn0 = byId("pickup-range-note"); if (nn0) nn0.innerHTML = "";
+          return;
+        }
         var prev = sel.value || "";
         var day = jstTodayDay();
         var range = pickupRangeFor(branch, day);
         var startLabel = fmtMins(range.start), endLabel = fmtMins(range.end);
-        var html = '<option value="">できるだけ早く / As soon as possible</option>';
+        var html = '<option value="">受け取り時間をお選びください / Please select a pickup time</option>';
         for (var mins = range.start; mins <= range.end; mins += 30){
           var label = fmtMins(mins);
           html += '<option value="' + label + '">' + label + "</option>";
         }
         sel.innerHTML = html;
-        /* keep a choice the customer already made while it is still a
-           valid slot today; otherwise pre-select the EARLIEST available
-           slot for this branch/day, so checkout is ready with one less
-           decision (the customer can still change it, including back
-           to "as soon as possible") */
+        /* keep a choice the customer personally made while it is still
+           a valid slot today; otherwise leave the time UNSELECTED — the
+           customer must choose a pickup time (no earliest-slot default,
+           no "as soon as possible") */
         var stillValid = false;
         for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === prev) stillValid = true;
-        sel.value = (pickupSlotsInit && stillValid) ? prev : startLabel;
+        sel.value = (pickupSlotsInit && stillValid && prev !== "" && slotChosenByUser) ? prev : "";
+        sel.onchange = function(){ slotChosenByUser = true; };
         pickupSlotsInit = true;
         var d = BRANCHES[branch];
         var note = byId("pickup-range-note");
