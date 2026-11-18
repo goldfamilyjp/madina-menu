@@ -183,9 +183,15 @@
       }
       .howto-toggle:active{transform:scale(.99)}
       .howto-toggle.howto-q{
-        width:42px;height:42px;min-width:42px;padding:0;margin-top:12px;
-        border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
-        font-size:21px;font-weight:900;line-height:1;text-align:center;
+        width:auto;height:auto;min-width:0;padding:6px 16px 6px 7px;margin-top:12px;
+        border-radius:999px;display:inline-flex;align-items:center;justify-content:flex-start;gap:9px;
+        font-size:14px;font-weight:900;line-height:1.2;text-align:left;
+      }
+      .howto-q .qmark{
+        width:30px;height:30px;flex:none;border-radius:50%;
+        background:var(--halal);color:#fff;
+        display:inline-flex;align-items:center;justify-content:center;
+        font-size:17px;font-weight:900;line-height:1;
       }
       .howto-toggle .ht-chev{
         flex:none;font-size:15px;color:var(--halal);line-height:1;
@@ -581,6 +587,17 @@
         box-shadow:0 4px 14px rgba(179,64,30,.35);
       }
       .btn-order:disabled{opacity:.45;box-shadow:none}
+      .btn-order.btn-confirm{
+        display:flex;align-items:center;justify-content:center;gap:11px;
+        position:sticky;bottom:10px;z-index:6;
+      }
+      .btn-order .btn-check{
+        width:32px;height:32px;flex:none;border-radius:50%;background:#fff;color:#128C4A;
+        display:inline-flex;align-items:center;justify-content:center;
+        font-size:18px;font-weight:900;line-height:1;
+      }
+      .btn-order-line .btn-check{color:#06C755}
+      .btn-order-text{text-align:center}
       .btn-ghost{
         width:100%;margin-top:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink);
         font-weight:700;font-size:14px;padding:12px;border-radius:13px;
@@ -809,7 +826,8 @@
          the full instructions stay hidden until tapped -->
     <div class="branch-box">
         <button type="button" class="howto-toggle howto-q" id="howto-toggle" aria-expanded="false" aria-controls="howto-panel" onclick="return toggleHowto()" aria-label="注文方法 / How to Order" title="注文方法 / How to Order">
-          <span id="howto-toggle-label">?</span>
+          <span class="qmark" id="howto-toggle-label">?</span>
+          <span class="qtext">注文方法 / How to Order</span>
         </button>
         <div class="howto" id="howto-panel" hidden>
           <strong>ピックアップ注文の流れ / How to Order for Pickup</strong><br>
@@ -959,9 +977,9 @@
         <p class="sub" id="cart-branch-line"></p>
         <div id="cart-lines"></div>
         <div id="cart-checkout">
-          <div class="pickup-note"><strong>受け取り方法：店頭受け取り（ピックアップ）のみ / Pickup only</strong><br>配達は行っておりません。お支払いは受け取り時に店頭でお願いいたします。<br>No delivery. Please pay at the shop when you pick up your order.</div>
+          <div class="pickup-note"><strong>店頭受け取りのみ / Pickup only</strong> — お支払いは受け取り時に店頭で / Pay at the shop at pickup.</div>
           <div class="total-row"><span>合計（税込）/ Total (incl. tax)</span><span class="amt" id="cart-total">¥0</span></div>
-          <p class="tax-note">お支払いは受け取り時に店頭にて / Pay at the shop at pickup</p>
+          
           
           <div class="field">
             <label for="pickup-time">受け取り希望時間（必須）<span class="bi-en">Pickup Time — Required</span></label>
@@ -972,12 +990,12 @@
           <div class="field">
             <label for="order-note">ご要望・メッセージ（任意）<span class="bi-en">Message / Requests (optional)</span></label>
             <textarea id="order-note" rows="3" maxlength="300" placeholder="例：ナンをよく焼いてください / e.g. extra crispy nan, please"></textarea>
-            <p class="hint">ご要望があればご記入ください。注文と一緒にWhatsAppまたはLINEで店舗へ送られます。空欄でも注文できます。<br>If you have any request, write it here — it is sent to the shop together with your order on WhatsApp or LINE. You can leave it blank.</p>
+            <p class="hint">注文と一緒に店舗へ送られます。空欄でもOKです。<br>Sent to the shop with your order. Can be left blank.</p>
           </div>
           <div class="notice-send" role="alert">
             <span class="ns-title">注文の確定について / How Your Order Is Confirmed</span><br>
-            <span id="notice-send-body">「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開いて注文内容が入力されます。WhatsAppでそのまま<strong>「送信」</strong>してください。それで注文が店舗に届き、確定します。
-            <span class="en-line">Tap <strong>“Confirm Order”</strong> once — your order ticket appears and WhatsApp opens at the same time with your order written. Just press <strong>Send</strong> in WhatsApp and your order reaches the shop, confirmed.</span></span>
+            <span id="notice-send-body">「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開いて注文内容が入力されます。そのまま<strong>「送信」</strong>を押せば注文確定です。
+            <span class="en-line">Tap <strong>“Confirm Order”</strong> once — WhatsApp opens with your order written. Press <strong>Send</strong> and your order is confirmed.</span></span>
           </div>
           <div class="field">
             <label>注文の送信方法<span class="bi-en">Send My Order Via</span></label>
@@ -993,7 +1011,7 @@
             </div>
             <p class="hint" id="channel-hint">「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開きます。<br>Tap “Confirm Order” — your ticket appears and WhatsApp opens with your order written.</p>
           </div>
-          <button class="btn-order btn-order-wa" id="btn-order" onclick="placeOrder()">注文を確定する<span class="bi-en" id="btn-order-sub">Confirm Order — WhatsApp</span></button>
+          <button class="btn-order btn-order-wa btn-confirm" id="btn-order" onclick="placeOrder()"><span class="btn-check" aria-hidden="true">✓</span><span class="btn-order-text">注文を確定する<span class="bi-en" id="btn-order-sub">Confirm Order — WhatsApp</span></span></button>
         </div>
         <button class="btn-ghost" onclick="closeCart()">メニューに戻る / Back to Menu</button>
       </div>
@@ -1477,16 +1495,16 @@
         var hint = byId("channel-hint");
         if (hint){
           hint.innerHTML = orderChannel === "line"
-            ? "「注文を確定する」を押すと、注文票が表示され、同時にLINEが開きます。初めての方は、先に友だち追加が表示される場合があります。注文内容は自動でコピーされますので、LINEのトーク画面に貼り付けて送信してください。<br>Tap “Confirm Order” — your ticket appears and LINE opens. First time? You may be asked to add the shop as a friend first. Your order text is copied automatically — paste it into the LINE chat and send."
-            : "「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開きます。<br>Tap “Confirm Order” — your ticket appears and WhatsApp opens with your order written.";
+            ? "「注文を確定する」を押すと、LINEが開きます。注文内容はコピー済み — 貼り付けて送信してください。<br>Tap “Confirm Order” — LINE opens with your order copied. Paste it in the chat and send."
+            : "「注文を確定する」を押すと、WhatsAppが開きます。<br>Tap “Confirm Order” — WhatsApp opens with your order written.";
         }
         var notice = byId("notice-send-body");
         if (notice){
           notice.innerHTML = orderChannel === "line"
-            ? "「注文を確定する」を押すと、注文票が表示され、同時にLINEが開きます。注文内容は自動でコピーされますので、LINEのトーク画面に<strong>貼り付けて（ペーストして）「送信」</strong>してください。それで注文が店舗に届き、確定します。コピーされていない場合は、注文票の「注文内容をコピー」ボタンでコピーしてください。"
-              + "<span class=\"en-line\">Tap <strong>“Confirm Order”</strong> once — your order ticket appears and LINE opens at the same time. Your order text is copied automatically: <strong>paste it into the LINE chat and press Send</strong>, and your order reaches the shop, confirmed. If it was not copied, use the “Copy Order Text” button on your ticket.</span>"
-            : "「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開いて注文内容が入力されます。WhatsAppでそのまま<strong>「送信」</strong>してください。それで注文が店舗に届き、確定します。"
-              + "<span class=\"en-line\">Tap <strong>“Confirm Order”</strong> once — your order ticket appears and WhatsApp opens at the same time with your order written. Just press <strong>Send</strong> in WhatsApp and your order reaches the shop, confirmed.</span>";
+            ? "「注文を確定する」を押すと、注文票が表示され、同時にLINEが開きます。注文内容は自動でコピーされますので、LINEに<strong>貼り付けて「送信」</strong>してください。それで注文確定です。"
+              + "<span class=\"en-line\">Tap <strong>“Confirm Order”</strong> once — LINE opens with your order copied: <strong>paste and Send</strong>, done. If it was not copied, use the “Copy Order Text” button on your ticket.</span>"
+            : "「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開いて注文内容が入力されます。そのまま<strong>「送信」</strong>を押せば注文確定です。"
+              + "<span class=\"en-line\">Tap <strong>“Confirm Order”</strong> once — WhatsApp opens with your order written. Press <strong>Send</strong> and your order is confirmed.</span>";
         }
         var btn = byId("btn-order");
         if (btn){
@@ -2089,13 +2107,7 @@
         if (hint){
           hint.innerHTML =
             startLabel + "〜" + endLabel + "の間で、30分ごとの時間からお選びください。<br>"
-            + "Choose a pickup time between " + startLabel + " and " + endLabel + " (every 30 minutes).<br>"
-            + "※店舗・曜日で変わります — " + (branch === "toyota"
-              ? "豊田店：火曜 17:30〜／金曜 14:30〜／その他の曜日 11:30〜（いずれも21:30まで）"
-              : "安城店：金曜 14:00〜／その他の曜日 11:30〜（いずれも21:30まで）")
-            + "<br>Hours vary by branch &amp; day — " + (branch === "toyota"
-              ? "Toyota: Tue from 17:30 / Fri from 14:30 / other days from 11:30 (until 21:30)"
-              : "Anjo: Fri from 14:00 / other days from 11:30 (until 21:30)");
+            + "Choose a pickup time between " + startLabel + " and " + endLabel + " (every 30 minutes).";
         }
         if (effStart > range.end){
           if (note) note.innerHTML = "本日の受け取り時間は終了しました。<span class=\"pr-en\">No pickup times left today.</span>";
