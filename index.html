@@ -974,6 +974,11 @@
             <textarea id="order-note" rows="3" maxlength="300" placeholder="例：ナンをよく焼いてください / e.g. extra crispy nan, please"></textarea>
             <p class="hint">ご要望があればご記入ください。注文と一緒にWhatsAppまたはLINEで店舗へ送られます。空欄でも注文できます。<br>If you have any request, write it here — it is sent to the shop together with your order on WhatsApp or LINE. You can leave it blank.</p>
           </div>
+          <div class="notice-send" role="alert">
+            <span class="ns-title">注文の確定について / How Your Order Is Confirmed</span><br>
+            <span id="notice-send-body">「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開いて注文内容が入力されます。WhatsAppでそのまま<strong>「送信」</strong>してください。それで注文が店舗に届き、確定します。
+            <span class="en-line">Tap <strong>“Confirm Order”</strong> once — your order ticket appears and WhatsApp opens at the same time with your order written. Just press <strong>Send</strong> in WhatsApp and your order reaches the shop, confirmed.</span></span>
+          </div>
           <div class="field">
             <label>注文の送信方法<span class="bi-en">Send My Order Via</span></label>
             <div class="seg channel-seg" role="tablist" aria-label="注文の送信方法を選ぶ">
@@ -987,11 +992,6 @@
               </button>
             </div>
             <p class="hint" id="channel-hint">「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開きます。<br>Tap “Confirm Order” — your ticket appears and WhatsApp opens with your order written.</p>
-          </div>
-          <div class="notice-send" role="alert">
-            <span class="ns-title">注文の確定について / How Your Order Is Confirmed</span><br>
-            <span id="notice-send-body">「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開いて注文内容が入力されます。WhatsAppでそのまま<strong>「送信」</strong>してください。それで注文が店舗に届き、確定します。
-            <span class="en-line">Tap <strong>“Confirm Order”</strong> once — your order ticket appears and WhatsApp opens at the same time with your order written. Just press <strong>Send</strong> in WhatsApp and your order reaches the shop, confirmed.</span></span>
           </div>
           <button class="btn-order btn-order-wa" id="btn-order" onclick="placeOrder()">注文を確定する<span class="bi-en" id="btn-order-sub">Confirm Order — WhatsApp</span></button>
         </div>
