@@ -74,7 +74,7 @@
       .halal-badge svg{flex:none}
       .brand-row{display:flex;align-items:center;gap:15px;margin-top:16px}
       .brand-logo{
-        width:64px;height:64px;flex:none;border-radius:50%;object-fit:cover;background:#fff;
+        width:112px;height:112px;flex:none;border-radius:50%;object-fit:contain;background:#fff;
         border:2.5px solid #C9A24B;
         box-shadow:0 0 0 3px rgba(201,162,75,.28),0 6px 18px rgba(0,0,0,.42);
       }
@@ -106,7 +106,7 @@
       @media (min-width:700px){
         .hero-inner{text-align:center;padding:38px 24px 32px}
         .brand-row{flex-direction:column;gap:15px;margin-top:20px}
-        .brand-logo{width:94px;height:94px}
+        .brand-logo{width:150px;height:150px}
         .brand-text{flex:none}
         .brand-text::after{
           margin-left:auto;margin-right:auto;width:min(250px,80%);
@@ -1867,6 +1867,9 @@
           time: now.toLocaleString("ja-JP", { year:"numeric", month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" })
         };
         var t = lastTicket, html = "";
+        var logoEl = document.querySelector(".brand-logo");
+        var logoSrc = logoEl ? (logoEl.getAttribute("src") || "") : "";
+        if (logoSrc) html += '<img src="' + logoSrc + '" alt="Madina Halal \u2014 \u516c\u5f0f\u30ed\u30b4" style="display:block;width:92px;height:92px;object-fit:contain;border-radius:50%;background:#fff;margin:2px auto 10px" />';
         var isLine = t.channel === "line";
         var appName = isLine ? "LINE" : "WhatsApp";
         html += '<div class="inv-head">'
