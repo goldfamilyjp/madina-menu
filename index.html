@@ -958,11 +958,7 @@
           <div class="pickup-note"><strong>受け取り方法：店頭受け取り（ピックアップ）のみ / Pickup only</strong><br>配達は行っておりません。お支払いは受け取り時に店頭でお願いいたします。<br>No delivery. Please pay at the shop when you pick up your order.</div>
           <div class="total-row"><span>合計（税込）/ Total (incl. tax)</span><span class="amt" id="cart-total">¥0</span></div>
           <p class="tax-note">お支払いは受け取り時に店頭にて / Pay at the shop at pickup</p>
-          <div class="field">
-            <label for="pickup-name">お名前（受け取り用）<span class="bi-en">Your Name (for pickup)</span></label>
-            <input id="pickup-name" type="text" placeholder="例：田中 / e.g. Tanaka" maxlength="30" autocomplete="name" />
-            <p class="hint">受け取りの際にカウンターでお伝えいただくお名前です。<br>The name you will give at the counter when you pick up.</p>
-          </div>
+          
           <div class="field">
             <label for="pickup-time">受け取り希望時間（必須）<span class="bi-en">Pickup Time — Required</span></label>
             <select id="pickup-time"></select>
@@ -1848,6 +1844,7 @@
       function placeOrder(){
         if (cartCount() === 0) return;
         if (!branch){ closeCart(); requireBranch(); return; }
+        buildPickupSlots(); /* drop any slot that is now less than 30 min away */
         if (!pickupFields().time){
           alert("受け取り時間をお選びください。\nPlease select a pickup time.");
           var tEl0 = byId("pickup-time"); if (tEl0 && tEl0.focus) tEl0.focus();
@@ -1895,7 +1892,7 @@
           + '<div class="row"><dt>日時 / Date</dt><dd>' + t.time + "</dd></div>"
           + '<div class="row"><dt>店舗 / Branch</dt><dd>' + t.branchName + " (" + t.branchEn + ")</dd></div>"
           + '<div class="row"><dt>受け取り / Pickup</dt><dd>店頭受け取り（ピックアップ）のみ</dd></div>'
-          + '<div class="row"><dt>お名前 / Name</dt><dd>' + (t.pickupName ? esc(t.pickupName) : "―") + "</dd></div>"
+          
           + '<div class="row"><dt>受け取り希望 / Time</dt><dd>' + (t.pickupTime ? esc(t.pickupTime) : "―") + "</dd></div>"
           + (t.note ? '<div class="row"><dt>ご要望 / Note</dt><dd style="max-width:64%;white-space:pre-wrap;word-break:break-word">' + esc(t.note) + "</dd></div>" : "")
           + "</dl>";
@@ -1910,10 +1907,10 @@
         html += "</div>";
         html += '<div class="grand"><span class="lbl">合計 / TOTAL（税込）</span><span class="amt">' + yen(t.total) + "</span></div>";
         html += isLine
-          ? '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">✓ LINEが開きました（注文内容はコピー済みです）</div><div class="ws-en">LINE IS OPEN — YOUR ORDER TEXT IS COPIED</div>LINEのトーク画面に注文内容を<strong>貼り付けて「送信」</strong>を押すと、注文が店舗に届きます。受け取り時間にご来店のうえ、カウンターで注文番号とお名前をお伝えください。お支払いは店頭にてお願いいたします。<br><strong>Paste</strong> your order text into the LINE chat and press <strong>Send</strong> — the shop receives your order. Come at your pickup time and give your order number and name at the counter. Payment is at the shop.</div>'
-          : '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">✓ WhatsAppで注文内容が開きました</div><div class="ws-en">YOUR ORDER IS OPEN IN WHATSAPP</div>WhatsAppで<strong>「送信」</strong>を押すと、注文が店舗に届きます。受け取り時間にご来店のうえ、カウンターで注文番号とお名前をお伝えください。お支払いは店頭にてお願いいたします。<br>Press <strong>Send</strong> in WhatsApp and the shop receives your order. Come at your pickup time and give your order number and name at the counter. Payment is at the shop.</div>';
+          ? '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">✓ LINEが開きました（注文内容はコピー済みです）</div><div class="ws-en">LINE IS OPEN — YOUR ORDER TEXT IS COPIED</div>LINEのトーク画面に注文内容を<strong>貼り付けて「送信」</strong>を押すと、注文が店舗に届きます。受け取り時間にご来店のうえ、カウンターで注文番号をお伝えください。お支払いは店頭にてお願いいたします。<br><strong>Paste</strong> your order text into the LINE chat and press <strong>Send</strong> — the shop receives your order. Come at your pickup time and give your order number at the counter. Payment is at the shop.</div>'
+          : '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">✓ WhatsAppで注文内容が開きました</div><div class="ws-en">YOUR ORDER IS OPEN IN WHATSAPP</div>WhatsAppで<strong>「送信」</strong>を押すと、注文が店舗に届きます。受け取り時間にご来店のうえ、カウンターで注文番号をお伝えください。お支払いは店頭にてお願いいたします。<br>Press <strong>Send</strong> in WhatsApp and the shop receives your order. Come at your pickup time and give your order number at the counter. Payment is at the shop.</div>';
         html += '<p class="confirm-note" id="confirm-note">' + appName + 'が自動で開かなかった場合は、注文票の上部にある大きなボタンから開いてください。<br>If ' + appName + ' did not open automatically, use the big button at the TOP of this ticket.</p>';
-        html += '<p class="foot"><span class="thanks">ご注文ありがとうございます / Thank you for your order!</span><br>ご来店の際、カウンターで注文番号とお名前をお伝えください。<br>Please tell the staff your order number and name at the counter.<br>お支払いは受け取り時に店頭にてお願いいたします / Pay at the shop at pickup.</p>';
+        html += '<p class="foot"><span class="thanks">ご注文ありがとうございます / Thank you for your order!</span><br>ご来店の際、カウンターで注文番号をお伝えください。<br>Please tell the staff your order number at the counter.<br>お支払いは受け取り時に店頭にてお願いいたします / Pay at the shop at pickup.</p>';
         html += "</div>";
         byId("ticket").innerHTML = html;
         /* Send the full order details to the shop as a message in the app
@@ -1926,7 +1923,7 @@
           "注文番号 / Order No: " + t.no,
           "店舗 / Branch: " + t.branchName + " (" + t.branchEn + ")",
           "日時 / Date: " + t.time,
-          "お名前 / Name: " + (t.pickupName || "―"),
+          
           "受け取り希望 / Pickup time: " + (t.pickupTime || "―"),
           "──────────",
           "ご注文明細 / Items:"
@@ -1982,8 +1979,7 @@
         cartOrder = [];
         MENU.forEach(function(m){ syncItemUI(m.id); });
         syncCartBar();
-        byId("pickup-name").value = "";
-        /* reset the pickup time to the earliest available slot again */
+        /* rebuild the pickup slots (from 30 min from now), left unselected */
         pickupSlotsInit = false;
         buildPickupSlots();
         var noteEl = byId("order-note");
@@ -2050,9 +2046,21 @@
         var prev = sel.value || "";
         var day = jstTodayDay();
         var range = pickupRangeFor(branch, day);
-        var startLabel = fmtMins(range.start), endLabel = fmtMins(range.end);
+        /* Pickup slots start 30 minutes from NOW (Ali, 2026-11-18):
+           earlier slots are never shown, so a customer cannot pick a
+           time the kitchen cannot meet. The first slot offered is the
+           first 30-minute grid slot at or after (now + 30 min),
+           still inside the branch's range for today. */
+        var nowMins;
+        try { var nj = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })); nowMins = nj.getHours() * 60 + nj.getMinutes(); }
+        catch (e) { var nl = new Date(); nowMins = nl.getHours() * 60 + nl.getMinutes(); }
+        var effStart = Math.max(range.start, Math.ceil((nowMins + 30) / 30) * 30);
+        var startLabel = fmtMins(effStart), endLabel = fmtMins(range.end);
         var html = '<option value="">受け取り時間をお選びください / Please select a pickup time</option>';
-        for (var mins = range.start; mins <= range.end; mins += 30){
+        if (effStart > range.end){
+          html = '<option value="">本日の受け取り時間は終了しました / No pickup times left today</option>';
+        }
+        for (var mins = effStart; mins <= range.end; mins += 30){
           var label = fmtMins(mins);
           html += '<option value="' + label + '">' + label + "</option>";
         }
@@ -2084,6 +2092,10 @@
             + "<br>Hours vary by branch &amp; day — " + (branch === "toyota"
               ? "Toyota: Tue from 17:30 / Fri from 14:30 / other days from 11:30 (until 21:30)"
               : "Anjo: Fri from 14:00 / other days from 11:30 (until 21:30)");
+        }
+        if (effStart > range.end){
+          if (note) note.innerHTML = "本日の受け取り時間は終了しました。<span class=\"pr-en\">No pickup times left today.</span>";
+          if (hint) hint.innerHTML = "本日のオンライン受け取りは終了しました。ご来店・お電話でご注文ください。<br>Online pickup has ended for today \u2014 please visit or call the shop.";
         }
       }
 
