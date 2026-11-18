@@ -1749,6 +1749,7 @@
          picks a pickup branch, adding dishes is blocked and the page
          points them back to the branch selector at the top. */
       function requireBranch(){
+        alert("まず受け取り店舗をお選びください。店舗を選ぶまで注文できません。\nPlease select a pickup branch first \u2014 you cannot order until you choose one.");
         var seg = byId("seg-anjo");
         if (seg && seg.scrollIntoView) seg.scrollIntoView({ behavior: "smooth", block: "center" });
         var rn = byId("branch-required-note");
