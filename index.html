@@ -509,6 +509,16 @@
       .empty-cart{text-align:center;color:var(--ink-2);padding:26px 0;font-size:14px;line-height:1.8}
       .total-row{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0 4px;font-weight:900}
       .total-row .amt{font-size:23px;color:var(--accent)}
+      .disc-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 0;font-weight:700;color:#1c7a3d}
+      .disc-row .amt{font-size:17px}
+      .coupon-row{display:flex;gap:8px}
+      .coupon-row input{flex:1;width:auto;text-transform:uppercase}
+      .coupon-apply{flex:0 0 auto;padding:0 18px;border:none;border-radius:11px;background:var(--accent);color:#fff;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer}
+      .coupon-msg{font-size:12.5px;margin-top:6px}
+      .coupon-msg.ok{color:#1c7a3d;font-weight:700}
+      .coupon-msg.err{color:#c0392b}
+      .coupon-applied{display:none;margin-top:6px;font-size:13px;font-weight:700;color:#1c7a3d}
+      .coupon-applied button{margin-left:8px;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:2px 10px;font-size:12px;color:var(--ink-2);font-family:inherit;cursor:pointer}
       .tax-note{font-size:11.5px;color:var(--ink-2);text-align:right}
       .field{margin-top:16px}
       .field label{display:block;font-weight:700;font-size:13.5px;margin-bottom:6px}
@@ -978,7 +988,17 @@
         <div id="cart-lines"></div>
         <div id="cart-checkout">
           <div class="pickup-note"><strong>店頭受け取りのみ / Pickup only</strong> — お支払いは受け取り時に店頭で / Pay at the shop at pickup.</div>
+          <div class="disc-row" id="disc-row" style="display:none"><span>クーポン割引 / Discount (<span id="disc-code"></span>)</span><span class="amt" id="cart-discount">−¥0</span></div>
           <div class="total-row"><span>合計（税込）/ Total (incl. tax)</span><span class="amt" id="cart-total">¥0</span></div>
+          <div class="field">
+            <label for="coupon-code">クーポンコード（任意）<span class="bi-en">Coupon Code (optional)</span></label>
+            <div class="coupon-row">
+              <input id="coupon-code" type="text" autocomplete="off" autocapitalize="characters" placeholder="例 / e.g. MADINA500" maxlength="20" />
+              <button type="button" class="coupon-apply" onclick="applyCoupon()">適用 / Apply</button>
+            </div>
+            <div class="coupon-msg" id="coupon-msg" role="status"></div>
+            <div class="coupon-applied" id="coupon-applied">✓ <span id="coupon-applied-text"></span><button type="button" onclick="removeCoupon()">外す / Remove</button></div>
+          </div>
           
           
           <div class="field">
@@ -1750,6 +1770,72 @@
         for (var k in cart){ var m = itemById(parseKey(k).id); if (m) t += m.price * cart[k]; }
         return t;
       }
+      /* ---------- coupons (Ali, 2026-11-19): code field at checkout.
+         Payment is at the shop, so staff verify the code on the ticket /
+         message. All current codes are the year-end campaign: ¥500 off
+         on orders of ¥5,000 or more, until 2026-12-31. ---------- */
+      var COUPONS = {
+        "MADINA500": { off: 500, min: 5000, until: "2026-12-31" },
+        "FB500": { off: 500, min: 5000, until: "2026-12-31" },
+        "GL500": { off: 500, min: 5000, until: "2026-12-31" }
+      };
+      var appliedCoupon = "";
+      function couponDef(){ return appliedCoupon ? COUPONS[appliedCoupon] : null; }
+      function couponDiscount(){
+        var d = couponDef(); if (!d) return 0;
+        return cartTotal() >= d.min ? d.off : 0;
+      }
+      function payableTotal(){ return cartTotal() - couponDiscount(); }
+      function couponMsg(text, ok){
+        var el = byId("coupon-msg"); if (!el) return;
+        el.textContent = text || "";
+        el.className = "coupon-msg" + (text ? (ok ? " ok" : " err") : "");
+      }
+      function syncCouponUI(){
+        var d = couponDef(), disc = couponDiscount();
+        var row = byId("disc-row");
+        if (row) row.style.display = disc > 0 ? "" : "none";
+        if (disc > 0){
+          var dc = byId("disc-code"); if (dc) dc.textContent = appliedCoupon;
+          var cd = byId("cart-discount"); if (cd) cd.textContent = "\u2212" + yen(disc);
+        }
+        var ap = byId("coupon-applied");
+        if (ap){
+          if (d && disc > 0){
+            ap.style.display = "block";
+            byId("coupon-applied-text").textContent = appliedCoupon + " \u9069\u7528\u4e2d / applied \u2212" + yen(disc);
+          } else ap.style.display = "none";
+        }
+        if (d && disc === 0 && cartTotal() > 0)
+          couponMsg("\u30af\u30fc\u30dd\u30f3\u306f" + yen(d.min) + "\u4ee5\u4e0a\u306e\u3054\u6ce8\u6587\u3067\u4f7f\u3048\u307e\u3059 / Coupon needs an order of " + yen(d.min) + " or more.", false);
+      }
+      function applyCoupon(){
+        var el = byId("coupon-code"); if (!el) return;
+        var code = el.value.trim().toUpperCase();
+        if (!code) return;
+        var d = COUPONS[code];
+        if (!d){
+          appliedCoupon = "";
+          renderCartLines();
+          couponMsg("\u305d\u306e\u30af\u30fc\u30dd\u30f3\u30b3\u30fc\u30c9\u306f\u4f7f\u3048\u307e\u305b\u3093 / That coupon code is not valid.", false);
+          return;
+        }
+        if (new Date() > new Date(d.until + "T23:59:59")){
+          appliedCoupon = "";
+          renderCartLines();
+          couponMsg("\u3053\u306e\u30af\u30fc\u30dd\u30f3\u306f\u6709\u52b9\u671f\u9650\u304c\u5207\u308c\u3066\u3044\u307e\u3059 / This coupon has expired.", false);
+          return;
+        }
+        appliedCoupon = code;
+        renderCartLines();
+        if (cartTotal() >= d.min) couponMsg("\u30af\u30fc\u30dd\u30f3\u3092\u9069\u7528\u3057\u307e\u3057\u305f / Coupon applied: \u2212" + yen(d.off), true);
+      }
+      function removeCoupon(){
+        appliedCoupon = "";
+        var el = byId("coupon-code"); if (el) el.value = "";
+        couponMsg("", true);
+        renderCartLines();
+      }
       function addToKey(key, delta){
         var isNew = !Object.prototype.hasOwnProperty.call(cart, key);
         var q = (cart[key] || 0) + delta;
@@ -1806,7 +1892,7 @@
         var n = cartCount();
         byId("cartbar").classList.toggle("on", n > 0);
         byId("cartbar-count").textContent = n + "点 / items";
-        byId("cartbar-total").textContent = yen(cartTotal());
+        byId("cartbar-total").textContent = yen(payableTotal());
       }
 
       function renderCartLines(){
@@ -1836,7 +1922,8 @@
           });
         }
         wrap.innerHTML = html;
-        byId("cart-total").textContent = yen(cartTotal());
+        syncCouponUI();
+        byId("cart-total").textContent = yen(payableTotal());
         byId("btn-order").disabled = keys.length === 0;
       }
 
@@ -1882,7 +1969,7 @@
         });
         lastTicket = {
           no: num, branchName: d.name, branchEn: d.en, pickupName: pk.name, pickupTime: pk.time, note: pk.note, channel: orderChannel,
-          lines: lines, total: cartTotal(),
+          lines: lines, subtotal: cartTotal(), discount: couponDiscount(), coupon: couponDiscount() > 0 ? appliedCoupon : "", total: payableTotal(),
           time: now.toLocaleString("ja-JP", { year:"numeric", month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" })
         };
         var t = lastTicket, html = "";
@@ -1927,6 +2014,10 @@
             + '<span class="amt">' + yen(l.amt) + "</span></div>";
         });
         html += "</div>";
+        if (t.discount > 0){
+          html += '<div style="display:flex;justify-content:space-between;padding:6px 2px 0;font-size:14px"><span>小計 / Subtotal</span><span>' + yen(t.subtotal) + "</span></div>";
+          html += '<div style="display:flex;justify-content:space-between;padding:2px 2px 0;font-size:14px;font-weight:700;color:#1c7a3d"><span>クーポン割引 / Coupon (' + t.coupon + ')</span><span>\u2212' + yen(t.discount) + "</span></div>";
+        }
         html += '<div class="grand"><span class="lbl">合計 / TOTAL（税込）</span><span class="amt">' + yen(t.total) + "</span></div>";
         html += isLine
           ? '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">✓ LINEが開きました（注文内容はコピー済みです）</div><div class="ws-en">LINE IS OPEN — YOUR ORDER TEXT IS COPIED</div>LINEのトーク画面に注文内容を<strong>貼り付けて「送信」</strong>を押すと、注文が店舗に届きます。受け取り時間にご来店のうえ、カウンターで注文番号をお伝えください。お支払いは店頭にてお願いいたします。<br><strong>Paste</strong> your order text into the LINE chat and press <strong>Send</strong> — the shop receives your order. Come at your pickup time and give your order number at the counter. Payment is at the shop.</div>'
@@ -1956,6 +2047,10 @@
         });
         if (t.note) msgLines.push("ご要望 / Note: " + t.note);
         msgLines.push("──────────");
+        if (t.discount > 0){
+          msgLines.push("小計 / Subtotal: " + yen(t.subtotal));
+          msgLines.push("クーポン / Coupon (" + t.coupon + "): \u2212" + yen(t.discount));
+        }
         msgLines.push("合計 / TOTAL（税込）: " + yen(t.total));
         msgLines.push("受け取り / Pickup: 店頭受け取りのみ");
         msgLines.push("お支払い / Payment: 店頭にて");
@@ -2006,6 +2101,9 @@
         buildPickupSlots();
         var noteEl = byId("order-note");
         if (noteEl) noteEl.value = "";
+        appliedCoupon = "";
+        var cpEl = byId("coupon-code"); if (cpEl) cpEl.value = "";
+        couponMsg("", true);
         dishSpice = {};
         MENU.forEach(function(m){ if (isSpicy(m)) setDishSpice(m.id, defaultSpice(m)); });
         closeTicket();
