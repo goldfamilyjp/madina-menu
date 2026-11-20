@@ -1716,6 +1716,7 @@
       }
 
       /* ---------- dish search ---------- */
+      var BN_ALIAS = {"আলু":"aloo","পরোটা":"paratha","নান":"nan","বিরিয়ানি":"biryani","চিকেন":"chicken","মাটন":"mutton","বিফ":"beef","ডিম":"egg","মাছ":"fish","চিংড়ি":"shrimp","ভাত":"rice","ডাল":"dal","সালাদ":"salad","কাবাব":"kebab","কেবাব":"kebab","টিক্কা":"tikka","তন্দুরি":"tandoori","লাসসি":"lassi","লাচ্ছি":"lassi","চা":"tea","কফি":"coffee","রুটি":"roti","চাপাতি":"chapati","পরটা":"paratha","পোলাও":"pulao","খিচুড়ি":"khichuri","মিষ্টি":"dessert","আইসক্রিম":"ice cream"};
       function filterDishes(){
         var input = byId("dish-search");
         var q = (input ? input.value : "").trim().toLowerCase();
@@ -1732,7 +1733,8 @@
             var el = byId("dish-" + m.id);
             if (!el) return;
             var hay = (m.jp + " " + m.en + " " + (m.desc || "")).toLowerCase();
-            var hit = q === "" || hay.indexOf(q) !== -1;
+            hay += " " + hay.replace(/parata/g, "paratha porota").replace(/\bnan\b/g, "naan").replace(/aloo/g, "alu");
+            var hit = q === "" || hay.indexOf(q) !== -1 || (BN_ALIAS[q] ? hay.indexOf(BN_ALIAS[q]) !== -1 : false);
             el.style.display = hit ? "" : "none";
             if (hit) visible++;
           });
