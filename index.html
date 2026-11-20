@@ -1743,6 +1743,20 @@
         });
         var nr = byId("no-results");
         if (nr) nr.style.display = (q !== "" && total === 0) ? "" : "none";
+        if (q !== "" && total > 0){
+          /* Ali, 2026-11-20: land on the FIRST result so the rest can be scrolled through */
+          clearTimeout(window.__srchScrollT);
+          window.__srchScrollT = setTimeout(function(){
+            var els = document.querySelectorAll("article.dish"), first = null;
+            for (var i = 0; i < els.length; i++){ if (els[i].style.display !== "none" && els[i].offsetParent !== null){ first = els[i]; break; } }
+            if (first){
+              var nav = document.querySelector(".catnav");
+              var off = nav ? nav.offsetHeight + 8 : 120;
+              var y = first.getBoundingClientRect().top + window.scrollY - off;
+              window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+            }
+          }, 450);
+        }
         if (status){
           if (q === ""){
             updateFilterStatus();
