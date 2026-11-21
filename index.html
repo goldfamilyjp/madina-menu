@@ -250,6 +250,12 @@
       .online-banner .ob-actions{
         display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;
       }
+      .online-banner .ob-offer{
+        margin-top:12px;background:#C9A24B;color:#14532D;border:2px solid #fff;
+        border-radius:12px;padding:9px 12px;box-shadow:0 4px 12px rgba(0,0,0,.22);
+      }
+      .online-banner .ob-offer-jp{display:block;font-weight:900;font-size:14.5px;line-height:1.55}
+      .online-banner .ob-offer-en{display:block;font-weight:700;font-size:12.5px;line-height:1.5;margin-top:2px}
       .online-banner .ob-actions .ob-scroll{margin-top:12px}
       .online-banner .ob-install{
         display:inline-flex;align-items:center;gap:7px;margin-top:12px;
@@ -793,6 +799,10 @@
         <div class="ob-actions">
           <span class="ob-scroll">下のメニューを見る / See Menu Below <span class="ob-arrow" aria-hidden="true">↓</span></span>
           <button type="button" class="ob-install" id="btn-install" onclick="return onInstallClick(event)">📲 ホーム画面に追加 / Add to Home Screen</button>
+        </div>
+        <div class="ob-offer">
+          <span class="ob-offer-jp">🎁 セットご注文で、ナン1枚またはラッシーを無料サービス！冬限定でスープも選べます</span>
+          <span class="ob-offer-en">Free plain naan or lassi with any set — winter soup available too!</span>
         </div>
       </div>
     </a>
@@ -1788,12 +1798,15 @@
       }
       /* ---------- coupons (Ali, 2026-11-19): code field at checkout.
          Payment is at the shop, so staff verify the code on the ticket /
-         message. All current codes are the year-end campaign: ¥500 off
-         on orders of ¥5,000 or more, until 2026-12-31. ---------- */
+         message. The ¥500 codes are the year-end campaign: ¥500 off
+         on orders of ¥5,000 or more, until 2026-12-31. MADINA300
+         (added 2026-11-21): ¥300 off on orders of ¥2,500 or more,
+         same expiry. ---------- */
       var COUPONS = {
         "MADINA500": { off: 500, min: 5000, until: "2026-12-31" },
         "FB500": { off: 500, min: 5000, until: "2026-12-31" },
-        "GL500": { off: 500, min: 5000, until: "2026-12-31" }
+        "GL500": { off: 500, min: 5000, until: "2026-12-31" },
+        "MADINA300": { off: 300, min: 2500, until: "2026-12-31" }
       };
       var appliedCoupon = "";
       function couponDef(){ return appliedCoupon ? COUPONS[appliedCoupon] : null; }
