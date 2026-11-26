@@ -674,8 +674,10 @@
       .channel-seg button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
       .channel-seg button[aria-selected="true"].ch-wa{background:#128C4A;box-shadow:0 3px 10px rgba(18,140,74,.35)}
       .channel-seg button[aria-selected="true"].ch-line{background:#06C755;box-shadow:0 3px 10px rgba(6,199,85,.35)}
+      .channel-seg button[aria-selected="true"].ch-mail{background:#0B4530;box-shadow:0 3px 10px rgba(11,69,48,.35)}
       .btn-order-wa{background:#128C4A;box-shadow:0 4px 14px rgba(18,140,74,.35)}
       .btn-order-line{background:#06C755;box-shadow:0 4px 14px rgba(6,199,85,.35)}
+      .btn-order-mail{background:#0B4530;box-shadow:0 4px 14px rgba(11,69,48,.35)}
       /* LINE fallback link + copy button on the ticket */
       .line-fallback{
         display:block;width:100%;margin-top:10px;text-align:center;
@@ -702,6 +704,7 @@
       .btn-open-app .bi-en{font-size:14px}
       .btn-open-app.is-line{background:#06C755;box-shadow:0 4px 14px rgba(6,199,85,.4)}
       .btn-open-app.is-wa{background:#128C4A;box-shadow:0 4px 14px rgba(18,140,74,.4)}
+.btn-open-app.is-mail{background:#0B4530;box-shadow:0 4px 14px rgba(11,69,48,.4)}
       .btn-open-app:active{transform:scale(.98)}
       .ticket-actions .btn-copy-order{margin-top:0}
       .ticket-actions .wa-hint{margin:2px 0 0}
@@ -1047,8 +1050,21 @@
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2Z"/></svg>
                 LINE
               </button>
+              <button type="button" class="ch-mail" id="ch-mail" role="tab" aria-selected="false" onclick="setChannel('mail')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z"/></svg>
+                Email
+              </button>
             </div>
             <p class="hint" id="channel-hint">「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開きます。<br>Tap “Confirm Order” — your ticket appears and WhatsApp opens with your order written.</p>
+          </div>
+          <div class="field" id="mail-fields" style="display:none">
+            <label for="cust-name">お名前（メール注文では必須）<span class="bi-en">Your Name — Required for Email Orders</span></label>
+            <input id="cust-name" type="text" autocomplete="name" maxlength="60" placeholder="例 / e.g. 山田 太郎" />
+            <label for="cust-phone" style="margin-top:10px">電話番号（必須）<span class="bi-en">Phone — Required</span></label>
+            <input id="cust-phone" type="tel" autocomplete="tel" maxlength="20" placeholder="例 / e.g. 090-1234-5678" />
+            <label for="cust-email" style="margin-top:10px">メールアドレス（必須）<span class="bi-en">Email — Required</span></label>
+            <input id="cust-email" type="email" autocomplete="email" maxlength="80" placeholder="例 / e.g. you@example.com" />
+            <p class="hint">注文確認のご連絡のため必要です。店舗から電話またはメールでご連絡します。<br>Needed so the shop can confirm your order — we reply by phone or email.</p>
           </div>
           <button class="btn-order btn-order-wa btn-confirm" id="btn-order" onclick="placeOrder()"><span class="btn-check" aria-hidden="true">✓</span><span class="btn-order-text">注文を確定する<span class="bi-en" id="btn-order-sub">Confirm Order — WhatsApp</span></span></button>
         </div>
@@ -1084,7 +1100,7 @@
     <script>
       var WA_NUMBER = "819065842039";
       var LINE_URL = "https://line.me/ti/p/arHUoKCEv0"; /* shop LINE add-friend / contact link (provided by the shop; the old @madinajp link showed "page not found"). This ti/p link cannot carry a pre-filled message, so LINE orders open this link and the order text is copied for the customer to paste into the chat. */
-      var orderChannel = "wa"; /* "wa" | "line" — chosen in the cart sheet */
+      var orderChannel = "wa"; /* "wa" | "line" | "mail" — chosen in the cart sheet */
       var dishSpice = {}; /* per-dish spice level (1–5), chosen on each dish's own card */
       var SPICE_LEVELS = {
         1: { jp: "甘口", en: "Mild" },
@@ -1525,16 +1541,21 @@
       function byId(id){ return document.getElementById(id); }
       function itemById(id){ for (var i=0;i<MENU.length;i++) if (MENU[i].id===id) return MENU[i]; return null; }
 
-      /* ---------- order channel (WhatsApp / LINE) ---------- */
+      /* ---------- order channel (WhatsApp / LINE / Email) ---------- */
       function setChannel(ch){
-        orderChannel = ch === "line" ? "line" : "wa";
-        var waBtn = byId("ch-wa"), lineBtn = byId("ch-line");
+        orderChannel = ch === "line" ? "line" : (ch === "mail" ? "mail" : "wa");
+        var waBtn = byId("ch-wa"), lineBtn = byId("ch-line"), mailBtn = byId("ch-mail");
         if (waBtn) waBtn.setAttribute("aria-selected", orderChannel === "wa" ? "true" : "false");
         if (lineBtn) lineBtn.setAttribute("aria-selected", orderChannel === "line" ? "true" : "false");
+        if (mailBtn) mailBtn.setAttribute("aria-selected", orderChannel === "mail" ? "true" : "false");
+        var mailFields = byId("mail-fields");
+        if (mailFields) mailFields.style.display = orderChannel === "mail" ? "" : "none";
         var hint = byId("channel-hint");
         if (hint){
           hint.innerHTML = orderChannel === "line"
             ? "「注文を確定する」を押すと、LINEが開きます。注文内容はコピー済み — 貼り付けて送信してください。<br>Tap “Confirm Order” — LINE opens with your order copied. Paste it in the chat and send."
+            : orderChannel === "mail"
+            ? "「注文を確定する」を押すと、注文票が表示され、注文がメールで店舗に送信されます。WhatsAppもLINEも不要です。<br>Tap “Confirm Order” — your ticket appears and your order is emailed to the shop. No WhatsApp or LINE needed."
             : "「注文を確定する」を押すと、WhatsAppが開きます。<br>Tap “Confirm Order” — WhatsApp opens with your order written.";
         }
         var notice = byId("notice-send-body");
@@ -1542,6 +1563,9 @@
           notice.innerHTML = orderChannel === "line"
             ? "「注文を確定する」を押すと、注文票が表示され、同時にLINEが開きます。注文内容は自動でコピーされますので、LINEに<strong>貼り付けて「送信」</strong>してください。それで注文確定です。"
               + "<span class=\"en-line\">Tap <strong>“Confirm Order”</strong> once — LINE opens with your order copied: <strong>paste and Send</strong>, done. If it was not copied, use the “Copy Order Text” button on your ticket.</span>"
+            : orderChannel === "mail"
+            ? "「注文を確定する」を押すと、注文票が表示され、注文内容がそのまま<strong>メールで店舗に送信</strong>されます。店舗から電話またはメールで確認の連絡が入れば注文確定です。"
+              + "<span class=\"en-line\">Tap <strong>“Confirm Order”</strong> once — your order is <strong>emailed straight to the shop</strong>. The shop confirms by phone or email.</span>"
             : "「注文を確定する」を押すと、注文票が表示され、同時にWhatsAppが開いて注文内容が入力されます。そのまま<strong>「送信」</strong>を押せば注文確定です。"
               + "<span class=\"en-line\">Tap <strong>“Confirm Order”</strong> once — WhatsApp opens with your order written. Press <strong>Send</strong> and your order is confirmed.</span>";
         }
@@ -1549,9 +1573,50 @@
         if (btn){
           btn.classList.toggle("btn-order-wa", orderChannel === "wa");
           btn.classList.toggle("btn-order-line", orderChannel === "line");
+          btn.classList.toggle("btn-order-mail", orderChannel === "mail");
           var sub = byId("btn-order-sub");
-          if (sub) sub.textContent = orderChannel === "line" ? "Confirm Order — LINE" : "Confirm Order — WhatsApp";
+          if (sub) sub.textContent = orderChannel === "line" ? "Confirm Order — LINE" : (orderChannel === "mail" ? "Confirm Order — Email" : "Confirm Order — WhatsApp");
         }
+      }
+      function mailContact(){
+        var n = byId("cust-name"), p = byId("cust-phone"), e = byId("cust-email");
+        return {
+          name: n ? n.value.trim() : "",
+          phone: p ? p.value.trim() : "",
+          email: e ? e.value.trim() : ""
+        };
+      }
+      /* Email channel: POST the order to the shop's inbox via FormSubmit
+         (same address the online shop uses). The ticket's green box is
+         updated with the result; if the POST fails, the ticket's big
+         button opens the customer's own mail app with the order ready. */
+      function sendEmailOrder(t, contact){
+        var box = byId("wa-sent");
+        function setBox(ws, wsEn, body){
+          if (!box) return;
+          box.innerHTML = '<div class="ws">' + ws + '</div><div class="ws-en">' + wsEn + "</div>" + body;
+        }
+        var failBody = "お手数ですが、注文票の上部にある<strong>「メールアプリで送る」</strong>ボタンから送信してください。<br>Please use the <strong>“Send via Mail App”</strong> button at the TOP of this ticket to send your order.";
+        if (!window.fetch){ setBox("メール送信に失敗しました", "THE EMAIL COULD NOT BE SENT", failBody); return; }
+        fetch("https://formsubmit.co/ajax/goldfamilyjp@yahoo.com", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            name: contact.name,
+            phone: contact.phone,
+            email: contact.email,
+            _replyto: contact.email,
+            _subject: "【レストラン注文 / Restaurant Order】" + t.no + " — " + t.branchEn,
+            message: lastOrderText,
+            _captcha: "false"
+          })
+        }).then(function(r){
+          if (!r.ok) throw new Error("http " + r.status);
+          setBox("✓ メールで送信しました", "YOUR ORDER WAS EMAILED TO THE SHOP",
+            "店舗に注文メールが届きました。店舗から電話またはメールで確認の連絡が入ります。受け取り時間にご来店のうえ、カウンターで注文番号をお伝えください。お支払いは店頭にてお願いいたします。<br>The shop has your order and will confirm by phone or email. Come at your pickup time and give your order number at the counter. Payment is at the shop.");
+        }).catch(function(){
+          setBox("メール送信に失敗しました", "THE EMAIL COULD NOT BE SENT", failBody);
+        });
       }
       /* Copy backup for LINE: if the pre-filled message does not appear in
          the LINE chat, the customer copies the order from the ticket and
@@ -1997,6 +2062,15 @@
           var tEl0 = byId("pickup-time"); if (tEl0 && tEl0.focus) tEl0.focus();
           return;
         }
+        if (orderChannel === "mail"){
+          var mc0 = mailContact();
+          if (!mc0.name || !mc0.phone || !mc0.email || mc0.email.indexOf("@") < 0){
+            alert("メール注文には、お名前・電話番号・メールアドレスが必要です。\nEmail orders need your name, phone and email address.");
+            var f0 = !mc0.name ? byId("cust-name") : (!mc0.phone ? byId("cust-phone") : byId("cust-email"));
+            if (f0 && f0.focus) f0.focus();
+            return;
+          }
+        }
         var d = BRANCHES[branch];
         var now = new Date();
         var num = d.prefix + "-" + String(Math.floor(1000 + Math.random() * 9000));
@@ -2015,7 +2089,8 @@
         var logoSrc = logoEl ? (logoEl.getAttribute("src") || "") : "";
         if (logoSrc) html += '<img src="' + logoSrc + '" alt="Madina Halal \u2014 \u516c\u5f0f\u30ed\u30b4" style="display:block;width:92px;height:92px;object-fit:contain;border-radius:50%;background:#fff;margin:2px auto 10px" />';
         var isLine = t.channel === "line";
-        var appName = isLine ? "LINE" : "WhatsApp";
+        var isMail = t.channel === "mail";
+        var appName = isLine ? "LINE" : (isMail ? "メール / Email" : "WhatsApp");
         html += '<div class="inv-head">'
           + '<div class="inv-kicker">【ご注文 / NEW ORDER】</div>'
           + '<div class="inv-shop">Madina Halal Food</div>'
@@ -2024,11 +2099,16 @@
         html += '<div class="inv-body">';
         html += '<div class="check"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
         html += "<h2>注文票<br><span style=\"font-size:14px\">Order Confirmation Ticket</span></h2>";
-        html += isLine
+        html += isMail
+          ? '<p class="show-staff">ご注文をメールで店舗へ送信しています。下の緑の欄に結果が表示されます<br>Your order is being emailed to the shop — the result appears in the green box below.</p>'
+          : isLine
           ? '<p class="show-staff">LINEが開きました。注文内容はコピー済みです — LINEのトークに貼り付けて「送信」を押すと、注文が店舗に届きます<br>LINE has opened and your order text is copied — paste it into the LINE chat and press Send, and the shop receives it.</p>'
           : '<p class="show-staff">WhatsAppが開きました。WhatsAppで「送信」を押すと、注文が店舗に届きます<br>WhatsApp has opened with your order — press Send there and the shop receives it.</p>';
         html += '<div class="ticket-actions">'
-          + (isLine
+          + (isMail
+            ? '<a class="btn-open-app is-mail" id="ticket-send" href="#" target="_blank" rel="noopener">メールアプリで送る<span class="bi-en">Send via Mail App (backup)</span></a>'
+              + '<p class="wa-hint">注文は自動でメール送信されます。うまくいかない場合は、このボタンからメールアプリで送信できます。<br>Your order is emailed automatically. If that fails, use this button to send it from your mail app.</p>'
+            : isLine
             ? '<a class="btn-open-app is-line" id="ticket-send" href="#" target="_blank" rel="noopener">LINEを開く<span class="bi-en">Open LINE — Tap Here</span></a>'
               + '<button type="button" class="btn-copy-order" id="ticket-copy" onclick="copyOrderText()">注文内容をコピー<span class="bi-en">Copy Order Text</span></button>'
               + '<p class="wa-hint">注文内容はコピー済みです。LINEが開いたら、トーク画面に貼り付けて（ペーストして）「送信」を押してください。<br>Your order text is copied. When LINE opens, paste it into the chat and press Send.</p>'
@@ -2057,10 +2137,14 @@
           html += '<div style="display:flex;justify-content:space-between;padding:2px 2px 0;font-size:14px;font-weight:700;color:#1c7a3d"><span>クーポン割引 / Coupon (' + t.coupon + ')</span><span>\u2212' + yen(t.discount) + "</span></div>";
         }
         html += '<div class="grand"><span class="lbl">合計 / TOTAL（税込）</span><span class="amt">' + yen(t.total) + "</span></div>";
-        html += isLine
+        html += isMail
+          ? '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">メールで送信中…</div><div class="ws-en">SENDING YOUR ORDER BY EMAIL…</div>送信が完了すると、ここに結果が表示されます。そのままお待ちください。<br>Please wait a moment — the result will appear here.</div>'
+          : isLine
           ? '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">✓ LINEが開きました（注文内容はコピー済みです）</div><div class="ws-en">LINE IS OPEN — YOUR ORDER TEXT IS COPIED</div>LINEのトーク画面に注文内容を<strong>貼り付けて「送信」</strong>を押すと、注文が店舗に届きます。受け取り時間にご来店のうえ、カウンターで注文番号をお伝えください。お支払いは店頭にてお願いいたします。<br><strong>Paste</strong> your order text into the LINE chat and press <strong>Send</strong> — the shop receives your order. Come at your pickup time and give your order number at the counter. Payment is at the shop.</div>'
           : '<div class="wa-sent" id="wa-sent" role="status"><div class="ws">✓ WhatsAppで注文内容が開きました</div><div class="ws-en">YOUR ORDER IS OPEN IN WHATSAPP</div>WhatsAppで<strong>「送信」</strong>を押すと、注文が店舗に届きます。受け取り時間にご来店のうえ、カウンターで注文番号をお伝えください。お支払いは店頭にてお願いいたします。<br>Press <strong>Send</strong> in WhatsApp and the shop receives your order. Come at your pickup time and give your order number at the counter. Payment is at the shop.</div>';
-        html += '<p class="confirm-note" id="confirm-note">' + appName + 'が自動で開かなかった場合は、注文票の上部にある大きなボタンから開いてください。<br>If ' + appName + ' did not open automatically, use the big button at the TOP of this ticket.</p>';
+        html += isMail
+          ? '<p class="confirm-note" id="confirm-note">自動送信の結果は、上の緑の欄に表示されます。<br>The result of the automatic email appears in the green box above.</p>'
+          : '<p class="confirm-note" id="confirm-note">' + appName + 'が自動で開かなかった場合は、注文票の上部にある大きなボタンから開いてください。<br>If ' + appName + ' did not open automatically, use the big button at the TOP of this ticket.</p>';
         html += '<p class="foot"><span class="thanks">ご注文ありがとうございます / Thank you for your order!</span><br>ご来店の際、カウンターで注文番号をお伝えください。<br>Please tell the staff your order number at the counter.<br>お支払いは受け取り時に店頭にてお願いいたします / Pay at the shop at pickup.</p>';
         html += "</div>";
         byId("ticket").innerHTML = html;
@@ -2084,6 +2168,12 @@
             + (l.spice ? " ・ 辛さ / Spice: " + spiceLabel(l.spice) : ""));
         });
         if (t.note) msgLines.push("ご要望 / Note: " + t.note);
+        if (isMail){
+          var mc = mailContact();
+          msgLines.push("お名前 / Name: " + mc.name);
+          msgLines.push("電話 / Phone: " + mc.phone);
+          msgLines.push("メール / Email: " + mc.email);
+        }
         msgLines.push("──────────");
         if (t.discount > 0){
           msgLines.push("小計 / Subtotal: " + yen(t.subtotal));
@@ -2093,7 +2183,9 @@
         msgLines.push("受け取り / Pickup: 店頭受け取りのみ");
         msgLines.push("お支払い / Payment: 店頭にて");
         lastOrderText = msgLines.join("\n");
-        var sendUrl = isLine
+        var sendUrl = isMail
+          ? "mailto:goldfamilyjp@yahoo.com?subject=" + encodeURIComponent("【レストラン注文 / Restaurant Order】" + t.no + " — Madina Halal") + "&body=" + encodeURIComponent(lastOrderText)
+          : isLine
           ? LINE_URL
           : "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(lastOrderText);
         byId("ticket-send").href = sendUrl;
@@ -2110,7 +2202,7 @@
            blocked, the big Open button at the TOP of the ticket is
            immediately visible for one more tap. */
         if (isLine) copyTextFallback(lastOrderText);
-        openOrderApp(sendUrl);
+        if (isMail) sendEmailOrder(t, mailContact()); else openOrderApp(sendUrl);
         closeCart();
         byId("cartbar").classList.remove("on");
         byId("ticket-overlay").classList.add("on");
