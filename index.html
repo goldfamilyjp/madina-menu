@@ -1586,10 +1586,25 @@
           email: e ? e.value.trim() : ""
         };
       }
-      /* Email channel: POST the order to the shop's inbox via FormSubmit
-         (same address the online shop uses). The ticket's green box is
-         updated with the result; if the POST fails, the ticket's big
-         button opens the customer's own mail app with the order ready. */
+      /* Order emails go through the shop's own Apps Script mail action
+         (v13): sent from the owner's Google account — fast, and the
+         sender name is the shop's, no third-party relay. */
+      var ORDER_API_URL = "https://script.google.com/macros/s/AKfycby_-upjOI-USCbrD8b9wjcnYC7APdUrcIOVKY8S3zcB_r0ptbMgxAU-5k6hji53bDOhYA/exec";
+      var MAIL_KEY = "madina-mail-2026-x7k2";
+      function postMailOrder(payload){
+        payload.action = "mail_order";
+        payload.key = MAIL_KEY;
+        return fetch(ORDER_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        }).then(function(r){ return r.json(); });
+      }
+      /* Email channel: POST the order to the shop's inbox via the mail
+         action; the customer also gets a confirmation copy. The ticket's
+         green box is updated with the result; if the POST fails, the
+         ticket's big button opens the customer's own mail app with the
+         order ready. */
       function sendEmailOrder(t, contact){
         var box = byId("wa-sent");
         function setBox(ws, wsEn, body){
@@ -1598,20 +1613,29 @@
         }
         var failBody = "お手数ですが、注文票の上部にある<strong>「メールアプリで送る」</strong>ボタンから送信してください。<br>Please use the <strong>“Send via Mail App”</strong> button at the TOP of this ticket to send your order.";
         if (!window.fetch){ setBox("メール送信に失敗しました", "THE EMAIL COULD NOT BE SENT", failBody); return; }
-        fetch("https://formsubmit.co/ajax/goldfamilyjp@yahoo.com", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Accept": "application/json" },
-          body: JSON.stringify({
-            name: contact.name,
-            phone: contact.phone,
-            email: contact.email,
-            _replyto: contact.email,
-            _subject: "Madina Restaurant Order — " + t.no + " (" + t.branchEn + ")",
-            message: lastOrderText,
-            _captcha: "false"
-          })
-        }).then(function(r){
-          if (!r.ok) throw new Error("http " + r.status);
+        var custLines = [
+          "ご注文ありがとうございます！ Thank you for your order!",
+          "Madina Halal Restaurant — ご注文確認 / Order Confirmation",
+          "注文番号 / Order No: " + t.no,
+          "店舗 / Branch: " + t.branchName + " (" + t.branchEn + ")",
+          "受け取り希望 / Pickup time: " + (t.pickupTime || "―"),
+          "──────────"
+        ];
+        t.lines.forEach(function(l, i){
+          custLines.push((i + 1) + ". " + l.en + "（" + l.jp + "） " + yen(l.unit) + " × " + l.qty + " = " + yen(l.amt));
+        });
+        custLines.push("──────────");
+        custLines.push("合計 / TOTAL（税込）: " + yen(t.total));
+        custLines.push("お支払いは受け取り時に店頭にてお願いいたします。 / Please pay at the shop when you pick up.");
+        custLines.push("ご不明な点は 090-6584-2039 までお気軽にどうぞ。 / Questions? Call 090-6584-2039.");
+        postMailOrder({
+          subject: "Madina Restaurant Order — " + t.no + " (" + t.branchEn + ")",
+          message: lastOrderText,
+          customerEmail: contact.email,
+          customerSubject: "Madina Restaurant — Order Confirmation / ご注文確認 — " + t.no,
+          customerMessage: custLines.join("\n")
+        }).then(function(res){
+          if (!res || res.ok !== true) throw new Error("mail not confirmed");
           setBox("✓ メールで送信しました", "YOUR ORDER WAS EMAILED TO THE SHOP",
             "店舗に注文メールが届きました。店舗から電話またはメールで確認の連絡が入ります。受け取り時間にご来店のうえ、カウンターで注文番号をお伝えください。お支払いは店頭にてお願いいたします。<br>The shop has your order and will confirm by phone or email. Come at your pickup time and give your order number at the counter. Payment is at the shop.");
         }).catch(function(){
@@ -1628,15 +1652,9 @@
         if (!window.fetch) return;
         var app = t.channel === "line" ? "LINE" : "WhatsApp";
         try {
-          fetch("https://formsubmit.co/ajax/goldfamilyjp@yahoo.com", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({
-              name: "Madina Menu Website (" + app + ")",
-              _subject: "Madina Restaurant Order (Copy — " + app + ") — " + t.no + " (" + t.branchEn + ")",
-              message: "（このメールはコピーです。注文は" + app + "でも届きます — 二重に作らないでください）\n(This email is a COPY — the order also arrives by " + app + ". Do not prepare it twice.)\n\n" + lastOrderText,
-              _captcha: "false"
-            })
+          postMailOrder({
+            subject: "Madina Restaurant Order (Copy — " + app + ") — " + t.no + " (" + t.branchEn + ")",
+            message: "（このメールはコピーです。注文は" + app + "でも届きます — 二重に作らないでください）\n(This email is a COPY — the order also arrives by " + app + ". Do not prepare it twice.)\n\n" + lastOrderText
           }).catch(function(){});
         } catch (e) { /* best effort — the app order is unaffected */ }
       }
