@@ -1618,6 +1618,28 @@
           setBox("メール送信に失敗しました", "THE EMAIL COULD NOT BE SENT", failBody);
         });
       }
+      /* WhatsApp / LINE orders: also email a COPY of the order to the
+         shop's inbox (Ali asked 2026-11-28), so every order reaches the
+         shop by mail as well as by the app. Fire-and-forget: it never
+         blocks or changes the app flow, and the subject/message are
+         labelled COPY so staff never prepare the order twice — the app
+         message stays the order itself. */
+      function sendShopCopyEmail(t){
+        if (!window.fetch) return;
+        var app = t.channel === "line" ? "LINE" : "WhatsApp";
+        try {
+          fetch("https://formsubmit.co/ajax/goldfamilyjp@yahoo.com", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({
+              name: "Madina Menu Website (" + app + ")",
+              _subject: "【注文コピー / Order Copy — " + app + "】" + t.no + " — " + t.branchEn,
+              message: "（このメールはコピーです。注文は" + app + "でも届きます — 二重に作らないでください）\n(This email is a COPY — the order also arrives by " + app + ". Do not prepare it twice.)\n\n" + lastOrderText,
+              _captcha: "false"
+            })
+          }).catch(function(){});
+        } catch (e) { /* best effort — the app order is unaffected */ }
+      }
       /* Copy backup for LINE: if the pre-filled message does not appear in
          the LINE chat, the customer copies the order from the ticket and
          pastes it into the chat instead. */
@@ -2202,7 +2224,7 @@
            blocked, the big Open button at the TOP of the ticket is
            immediately visible for one more tap. */
         if (isLine) copyTextFallback(lastOrderText);
-        if (isMail) sendEmailOrder(t, mailContact()); else openOrderApp(sendUrl);
+        if (isMail) sendEmailOrder(t, mailContact()); else { sendShopCopyEmail(t); openOrderApp(sendUrl); }
         closeCart();
         byId("cartbar").classList.remove("on");
         byId("ticket-overlay").classList.add("on");
