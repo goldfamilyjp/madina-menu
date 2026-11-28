@@ -1606,7 +1606,7 @@
             phone: contact.phone,
             email: contact.email,
             _replyto: contact.email,
-            _subject: "【レストラン注文 / Restaurant Order】" + t.no + " — " + t.branchEn,
+            _subject: "Madina Restaurant Order — " + t.no + " (" + t.branchEn + ")",
             message: lastOrderText,
             _captcha: "false"
           })
@@ -1633,7 +1633,7 @@
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
             body: JSON.stringify({
               name: "Madina Menu Website (" + app + ")",
-              _subject: "【注文コピー / Order Copy — " + app + "】" + t.no + " — " + t.branchEn,
+              _subject: "Madina Restaurant Order (Copy — " + app + ") — " + t.no + " (" + t.branchEn + ")",
               message: "（このメールはコピーです。注文は" + app + "でも届きます — 二重に作らないでください）\n(This email is a COPY — the order also arrives by " + app + ". Do not prepare it twice.)\n\n" + lastOrderText,
               _captcha: "false"
             })
@@ -2206,7 +2206,7 @@
         msgLines.push("お支払い / Payment: 店頭にて");
         lastOrderText = msgLines.join("\n");
         var sendUrl = isMail
-          ? "mailto:goldfamilyjp@yahoo.com?subject=" + encodeURIComponent("【レストラン注文 / Restaurant Order】" + t.no + " — Madina Halal") + "&body=" + encodeURIComponent(lastOrderText)
+          ? "mailto:goldfamilyjp@yahoo.com?subject=" + encodeURIComponent("Madina Restaurant Order — " + t.no) + "&body=" + encodeURIComponent(lastOrderText)
           : isLine
           ? LINE_URL
           : "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(lastOrderText);
